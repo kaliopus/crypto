@@ -21,4 +21,14 @@ describe('rescue calculator', () => {
     });
     expect(plan?.collateralToTargetBase).toBe(750n);
   });
+
+  it('rounds collateral addition up so the estimate is conservative', () => {
+    const plan = calculateRescuePlan({
+      totalCollateralBase: 1000n,
+      totalDebtBase: 1000n,
+      currentLiquidationThreshold: 3333n,
+      targetHealthFactor: 1.4
+    });
+    expect(plan?.collateralToTargetBase).toBe(3202n);
+  });
 });

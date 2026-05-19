@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { getDb } from './index';
 import { alertEvents, riskSnapshots, watches, type NewWatch, type RiskSnapshot, type Watch } from './schema';
@@ -144,7 +144,7 @@ export async function storeRiskSnapshot(watchId: string | null, risk: PositionRi
 export async function listLatestSnapshots() {
   const db = getDb();
   if (db) {
-    return (db as any).select().from(riskSnapshots).limit(100);
+    return (db as any).select().from(riskSnapshots).orderBy(desc(riskSnapshots.createdAt)).limit(100);
   }
   return [...memory.snapshots].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 100);
 }
@@ -156,6 +156,7 @@ export async function getLastSnapshotForWatch(watchId: string) {
       .select()
       .from(riskSnapshots)
       .where(eq(riskSnapshots.watchId, watchId))
+      .orderBy(desc(riskSnapshots.createdAt))
       .limit(1);
     return row ?? null;
   }

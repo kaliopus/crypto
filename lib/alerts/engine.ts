@@ -30,17 +30,20 @@ export function shouldSendAlert(input: {
   if (!input.watch.telegramChatId) {
     return { send: false, reason: 'No Telegram chat ID configured.' };
   }
+  if (input.healthFactor !== null && input.healthFactor < Number(input.watch.minHealthFactor)) {
+    if (hasCooldownPassed(input.watch, input.now ?? new Date())) {
+      return { send: true, reason: 'Health Factor is below configured threshold and cooldown passed.' };
+    }
+    return { send: false, reason: 'Alert cooldown is active.' };
+  }
   if (input.currentRiskLevel === 'none' || input.currentRiskLevel === 'safe') {
     return { send: false, reason: 'Risk level does not require alert.' };
   }
   if (hasRiskWorsened(input.currentRiskLevel, input.previousRiskLevel)) {
     return { send: true, reason: 'Risk level worsened.' };
   }
-  if (input.healthFactor === null || input.healthFactor >= Number(input.watch.minHealthFactor)) {
+  if (input.healthFactor === null) {
     return { send: false, reason: 'Health Factor is above configured threshold.' };
   }
-  if (hasCooldownPassed(input.watch, input.now ?? new Date())) {
-    return { send: true, reason: 'Health Factor is below configured threshold and cooldown passed.' };
-  }
-  return { send: false, reason: 'Alert cooldown is active.' };
+  return { send: false, reason: 'Health Factor is above configured threshold.' };
 }

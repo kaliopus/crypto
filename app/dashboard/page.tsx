@@ -4,6 +4,8 @@ import { PositionTable } from '@/components/PositionTable';
 import { WatchForm } from '@/components/WatchForm';
 import { listWatches } from '@/lib/db/repository';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const watches = await listWatches();
 

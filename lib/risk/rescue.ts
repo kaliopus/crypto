@@ -8,6 +8,10 @@ export function healthFactorFromRaw(raw: bigint) {
   return Number(raw) / 1e18;
 }
 
+function ceilDiv(numerator: bigint, denominator: bigint) {
+  return numerator === 0n ? 0n : (numerator + denominator - 1n) / denominator;
+}
+
 export function calculateRescuePlan(input: {
   totalCollateralBase: bigint;
   totalDebtBase: bigint;
@@ -33,7 +37,7 @@ export function calculateRescuePlan(input: {
   const requiredCollateralAdjusted = (input.totalDebtBase * targetWad) / WAD;
   const additionalAdjustedCollateral = requiredCollateralAdjusted > collateralAdjusted ? requiredCollateralAdjusted - collateralAdjusted : 0n;
   // Approximation: assumes new collateral has the same weighted LT as the current portfolio.
-  const collateralToTargetBase = (additionalAdjustedCollateral * 10_000n) / input.currentLiquidationThreshold;
+  const collateralToTargetBase = ceilDiv(additionalAdjustedCollateral * 10_000n, input.currentLiquidationThreshold);
 
   return {
     targetHealthFactor: input.targetHealthFactor,

@@ -35,4 +35,15 @@ describe('alert engine', () => {
       }).send
     ).toBe(false);
   });
+
+  it('honors minHealthFactor even when the global risk band is safe', () => {
+    expect(
+      shouldSendAlert({
+        watch: { ...watch, minHealthFactor: '1.80' },
+        currentRiskLevel: 'safe',
+        previousRiskLevel: 'safe',
+        healthFactor: 1.6
+      }).send
+    ).toBe(true);
+  });
 });

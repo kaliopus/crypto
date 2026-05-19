@@ -439,21 +439,21 @@ Action taken:
 - Added `.swarm/` to `.gitignore`.
 - Added `tsconfig.tsbuildinfo` to `.gitignore`.
 
-Still needed:
+Status:
 
-- Commit this `.gitignore` update.
+- Addressed in commit `5052149`.
 
 ## Recommended Remediation Order
 
 ### Phase 0: Immediate Safety Fixes
 
-1. Fix collateral ceiling division.
-2. Fix alert engine so user `minHealthFactor` overrides global safe band.
-3. Fail closed in production when `DATABASE_URL` is missing.
+1. Fix collateral ceiling division. **Addressed in current Phase 0 patch.**
+2. Fix alert engine so user `minHealthFactor` overrides global safe band. **Addressed in current Phase 0 patch.**
+3. Fail closed in production when `DATABASE_URL` is missing. **Addressed in current Phase 0 patch.**
 4. Add auth/user ownership boundary for watch CRUD.
-5. Add `.swarm/` ignore commit.
-6. Fix deterministic latest snapshot ordering.
-7. Add non-interactive lint gate.
+5. Add `.swarm/` ignore commit. **Addressed in commit `5052149`.**
+6. Fix deterministic latest snapshot ordering. **Addressed in current Phase 0 patch.**
+7. Add non-interactive lint gate. **Addressed in current Phase 0 patch.**
 
 ### Phase 1: Reliability Hardening
 

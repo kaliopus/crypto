@@ -2,6 +2,9 @@ export const env = {
   get databaseUrl() {
     return process.env.DATABASE_URL;
   },
+  get allowMemoryDb() {
+    return process.env.ALLOW_MEMORY_DB === 'true' || process.env.NODE_ENV === 'test';
+  },
   get cronSecret() {
     return process.env.CRON_SECRET;
   },
