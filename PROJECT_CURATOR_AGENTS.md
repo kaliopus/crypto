@@ -139,6 +139,64 @@ Acceptance gates:
 - README instructions tested from clean checkout.
 - Release checklist completed.
 
+## Agent 5: Aave V3 & DeFi Lending Protocol Specialist
+
+Purpose: verify protocol-level correctness for Aave V3 and future lending adapters.
+
+Owns:
+
+- Aave V3 `Pool.getUserAccountData` semantics.
+- Market reference currency units and decimals.
+- Chain-specific Aave deployment verification.
+- Address-book source verification.
+- eMode, isolation mode, siloed borrowing, frozen/paused reserves, oracle sentinel behavior.
+- Liquidation threshold, close factor, and liquidation bonus implications.
+- Lending-protocol adapter safety for Morpho, Spark, Euler, and Fluid.
+
+Must check:
+
+- ABI and Pool address correctness against official sources.
+- Whether raw base-currency values are safe to expose to users.
+- Whether the adapter has enough data to support actionable rescue guidance.
+- Whether each future protocol can fit the current `PositionRisk` shape without hiding important risk state.
+- Whether protocol-specific unsupported states are surfaced instead of silently ignored.
+
+Acceptance gates:
+
+- Official address-book verification for every supported chain.
+- Documented unit/decimal semantics for every numeric field shown to users.
+- Protocol fixture tests or live/fork smoke tests for each supported chain.
+- Explicit unsupported-feature handling for eMode/isolation/oracle-sentinel/reserve-state nuances.
+
+## Agent 6: DeFi Liquidation, Oracle & Rescue Strategy Specialist
+
+Purpose: verify market-risk assumptions and user-safe rescue guidance.
+
+Owns:
+
+- Liquidation risk modeling beyond aggregate Health Factor.
+- Oracle stale/failure/manipulation assumptions.
+- Rescue estimate safety, rounding, and asset-action translation.
+- Liquidity, slippage, MEV, and transaction execution caveats.
+- Alert threshold policy and stale-data behavior.
+- Future one-click rescue safety boundaries.
+
+Must check:
+
+- Whether rescue numbers are conservative and never understate required action.
+- Whether alerts distinguish live data, stale data, unknown data, and provider errors.
+- Whether user copy avoids guarantees and does not imply transaction-ready quotes.
+- Whether future execution modules require simulation and explicit user signing.
+- Whether oracle and market failure modes are part of product behavior, not only docs.
+
+Acceptance gates:
+
+- Conservative rounding tests for repay and collateral estimates.
+- Stale/RPC failure policy tests.
+- Clear “estimate, not transaction quote” language near every rescue amount.
+- Oracle/source freshness strategy before production.
+- Execution boundary review before any transaction-building feature.
+
 ## Severity Standard
 
 - Critical: could cause loss of funds, secret leakage, false safety claims, broken production checks, or alert spam/failure at scale.

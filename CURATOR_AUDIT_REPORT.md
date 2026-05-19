@@ -12,6 +12,8 @@
 2. **Rawls** — Backend, Data & Worker Reliability Curator.
 3. **Ohm** — Security, Abuse & Operations Curator.
 4. **Kepler** — Product, Frontend & QA Curator.
+5. **Sagan** — Aave V3 & DeFi Lending Protocol Specialist.
+6. **Kuhn** — DeFi Liquidation, Oracle & Rescue Strategy Specialist.
 
 Все агенты проверяли проект независимо и без правок. Ruflo MCP был недоступен (`Transport closed`), поэтому аудит выполнен через локальный код, тесты, review tooling и проектные файлы.
 
@@ -159,6 +161,70 @@ Required fix:
 - Add inline warning: estimate, not transaction quote.
 - Add market reference currency metadata before human-readable amounts.
 
+### 7. User Alert Threshold Can Be Ignored When Global Risk Band Is Safe
+
+Owner: DeFi Liquidation & Rescue Strategy Specialist  
+Severity: Critical
+
+Problem:
+
+- Alert engine suppresses alerts early for `safe`.
+- `safe` is derived from global HF band `HF >= 1.5`.
+- If a user configures `minHealthFactor = 1.8` and current HF is `1.6`, the user expects an alert, but global classification is `safe`, so alert may be suppressed.
+
+Impact:
+
+- User-specific risk policy is not honored.
+- Product promise “your threshold” is violated.
+
+Required fix:
+
+- Evaluate user `minHealthFactor` before global safe/watch suppression.
+- Add tests for `HF < minHealthFactor` while global band is `safe`.
+
+### 8. Aave Adapter Is HF-Correct But Not Sufficient For Minimum Token-Level Rescue
+
+Owner: Aave V3 & DeFi Lending Protocol Specialist  
+Severity: High
+
+Problem:
+
+- Adapter reads `Pool.getUserAccountData`, which is enough for aggregate HF.
+- Rescue calculator returns base-currency estimates only.
+- It does not know debt asset, collateral asset, oracle price, decimals, liquidation bonus, reserve state, or action feasibility.
+
+Impact:
+
+- Product cannot honestly claim “minimum repay/add-collateral action” in real token terms yet.
+
+Required fix:
+
+- Mark current rescue plan as planning estimate only.
+- Add asset-level Aave position/reserve data before token-specific rescue guidance.
+
+### 9. Aave V3 Semantic Modes Are Missing
+
+Owner: Aave V3 & DeFi Lending Protocol Specialist  
+Severity: High
+
+Missing:
+
+- user eMode
+- isolation mode
+- siloed borrowing
+- paused/frozen reserves
+- oracle grace/sentinel state
+- reserve configuration bitmap
+- liquidation bonus and close-factor regimes
+
+Impact:
+
+- System can report aggregate HF, but cannot explain why the position is dangerous or which actions are unavailable.
+
+Required fix:
+
+- Extend Aave adapter with user configuration, reserve list, reserve data/configuration, user eMode, eMode category, oracle/source metadata.
+
 ## High Findings
 
 ### No Rate Limiting
@@ -239,6 +305,35 @@ Required fix:
 
 - Add optional live RPC smoke tests gated by env vars.
 - Verify pool addresses against official Aave address-book.
+
+### Protocol Adapter Interface Is Too Aave-Shaped
+
+Owner: Aave V3 & DeFi Lending Protocol Specialist
+
+Problem:
+
+- `PositionRisk` assumes Health Factor, LTV, liquidation threshold, base debt/collateral.
+- Morpho Blue, Euler, Fluid, and other lending protocols may not fit this shape safely.
+
+Required fix:
+
+- Redesign around generic `AccountRisk`, `MarketRiskContribution`, and `ProtocolSemantics`.
+- Each adapter must declare unit semantics, liquidation trigger, oracle source, unsupported states, and rescue assumptions.
+
+### Oracle/Stale Data Risk Is Not Modeled
+
+Owner: DeFi Liquidation & Rescue Strategy Specialist
+
+Problem:
+
+- Current adapter relies on successful `getUserAccountData`.
+- No block timestamp, data age, provider identity, stale cutoff, oracle sentinel status, or cross-source sanity check.
+- `readContract` and `getBlockNumber` are not tied to the same block.
+
+Required fix:
+
+- Store `blockNumber`, `blockTimestamp`, `dataAgeSeconds`, RPC provider identity, and stale/degraded status.
+- Add explicit unknown/stale-data alert policy.
 
 ## Medium Findings
 
@@ -353,11 +448,12 @@ Still needed:
 ### Phase 0: Immediate Safety Fixes
 
 1. Fix collateral ceiling division.
-2. Fail closed in production when `DATABASE_URL` is missing.
-3. Add auth/user ownership boundary for watch CRUD.
-4. Add `.swarm/` ignore commit.
-5. Fix deterministic latest snapshot ordering.
-6. Add non-interactive lint gate.
+2. Fix alert engine so user `minHealthFactor` overrides global safe band.
+3. Fail closed in production when `DATABASE_URL` is missing.
+4. Add auth/user ownership boundary for watch CRUD.
+5. Add `.swarm/` ignore commit.
+6. Fix deterministic latest snapshot ordering.
+7. Add non-interactive lint gate.
 
 ### Phase 1: Reliability Hardening
 
@@ -390,6 +486,8 @@ Still needed:
 3. Add base currency decimals/reference metadata.
 4. Add more edge-case math tests.
 5. Document unsupported Aave nuances.
+6. Extend Aave adapter for user/reserve configuration and eMode/isolation semantics.
+7. Redesign protocol adapter interface before adding Morpho/Euler/Fluid.
 
 ## Production Readiness Decision
 
@@ -419,5 +517,9 @@ Rawls owns backend, database, worker reliability, and migrations.
 Ohm owns security, abuse control, secrets, CI/CD, and operational risk.
 
 Kepler owns product UX, frontend quality, browser testing, accessibility, and release checklist.
+
+Sagan owns Aave V3 lending semantics, address-book verification, reserve/user configuration coverage, and protocol adapter correctness.
+
+Kuhn owns liquidation/oracle/rescue strategy, stale-data policy, market-risk assumptions, and future execution safety boundaries.
 
 Every future major change should be reviewed by the relevant curator before being considered ready.
