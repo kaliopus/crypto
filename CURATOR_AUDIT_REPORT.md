@@ -488,7 +488,7 @@ Status:
 
 ### Phase 4: DeFi Correctness
 
-1. Verify Aave pool constants against address-book.
+1. Verify Aave pool constants against address-book. **Addressed with `@aave-dao/aave-address-book`; regression test pins supported chain pool constants to the package exports.**
 2. Add optional live RPC/fork smoke checks.
 3. Add base currency decimals/reference metadata.
 4. Add more edge-case math tests.

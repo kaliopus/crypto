@@ -113,7 +113,7 @@ Tests mock away live RPC by using the adapter error path and in-memory repositor
 - Configure `CRON_SECRET` and send it as `Authorization: Bearer <secret>`.
 - Use production-grade RPC providers with rate limits and monitoring.
 - Use Postgres in production; in-memory storage is only for local demos.
-- Verify explicit Aave Pool addresses against official Aave docs or the Aave address-book package before production.
+- Aave V3 Pool addresses are sourced from `@aave-dao/aave-address-book`.
 
 ## Limitations
 
