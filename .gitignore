@@ -3,6 +3,8 @@ node_modules/
 out/
 dist/
 coverage/
+.swarm/
+tsconfig.tsbuildinfo
 
 .env
 .env.local
