@@ -60,6 +60,13 @@ Required fix:
 - Scope every watch query/update/delete by authenticated `userId`.
 - In production, never return all watches globally.
 
+Status:
+
+- Temporary user boundary added via `x-risk-sentinel-user-id`, `risk_sentinel_user_id` cookie, and local demo `RISK_SENTINEL_DEV_USER_ID`.
+- `GET /api/watches`, `POST /api/watches`, `PATCH /api/watches/[id]`, `DELETE /api/watches/[id]`, and dashboard list are scoped by user ID.
+- Cross-user list/patch/delete denial is covered by integration tests.
+- Still needed before paid beta: replace temporary boundary with a real auth provider/session system.
+
 ### 2. Silent In-Memory Fallback Can Lose Production Data
 
 Owner: Backend Curator / Security Curator  
@@ -450,7 +457,7 @@ Status:
 1. Fix collateral ceiling division. **Addressed in current Phase 0 patch.**
 2. Fix alert engine so user `minHealthFactor` overrides global safe band. **Addressed in current Phase 0 patch.**
 3. Fail closed in production when `DATABASE_URL` is missing. **Addressed in current Phase 0 patch.**
-4. Add auth/user ownership boundary for watch CRUD.
+4. Add auth/user ownership boundary for watch CRUD. **Temporary scoped boundary addressed; real auth provider still pending.**
 5. Add `.swarm/` ignore commit. **Addressed in commit `5052149`.**
 6. Fix deterministic latest snapshot ordering. **Addressed in current Phase 0 patch.**
 7. Add non-interactive lint gate. **Addressed in current Phase 0 patch.**

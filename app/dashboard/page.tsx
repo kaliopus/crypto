@@ -3,11 +3,14 @@ import { AlertHistory } from '@/components/AlertHistory';
 import { PositionTable } from '@/components/PositionTable';
 import { WatchForm } from '@/components/WatchForm';
 import { listWatches } from '@/lib/db/repository';
+import { getCurrentUserId } from '@/lib/auth';
+import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const watches = await listWatches();
+  const userId = getCurrentUserId(await headers());
+  const watches = userId ? await listWatches(userId) : [];
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-5 py-6">
@@ -23,6 +26,11 @@ export default async function DashboardPage() {
       </section>
       <div className="grid gap-6 lg:grid-cols-[1fr_24rem]">
         <div className="space-y-6">
+          {!userId ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+              User authentication is required before watches can be displayed.
+            </div>
+          ) : null}
           <PositionTable watches={watches.map((watch) => ({ ...watch, lastCheckedAt: watch.lastCheckedAt?.toISOString() ?? null }))} />
           <AlertHistory />
         </div>

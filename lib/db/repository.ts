@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { getDb } from './index';
 import { alertEvents, riskSnapshots, watches, type NewWatch, type RiskSnapshot, type Watch } from './schema';
@@ -62,40 +62,48 @@ export async function createWatch(input: NewWatch): Promise<WatchRecord> {
   return row;
 }
 
-export async function listWatches(): Promise<WatchRecord[]> {
+export async function listWatches(userId: string): Promise<WatchRecord[]> {
   const db = getDb();
   if (db) {
-    return (await (db as any).select().from(watches).where(eq(watches.isActive, true))) as WatchRecord[];
+    return (await (db as any)
+      .select()
+      .from(watches)
+      .where(and(eq(watches.isActive, true), eq(watches.userId, userId)))) as WatchRecord[];
   }
-  return memory.watches.filter((watch) => watch.isActive).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  return memory.watches.filter((watch) => watch.isActive && watch.userId === userId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 }
 
 export async function updateWatch(
   id: string,
-  input: Partial<Pick<WatchRecord, 'minHealthFactor' | 'targetHealthFactor' | 'telegramChatId' | 'isActive' | 'lastCheckedAt' | 'lastAlertedAt'>>
+  input: Partial<Pick<WatchRecord, 'minHealthFactor' | 'targetHealthFactor' | 'telegramChatId' | 'isActive' | 'lastCheckedAt' | 'lastAlertedAt'>>,
+  userId?: string
 ): Promise<WatchRecord | null> {
   const db = getDb();
   if (db) {
     const [row] = await (db as any)
       .update(watches)
       .set({ ...input, updatedAt: now() })
-      .where(eq(watches.id, id))
+      .where(userId ? and(eq(watches.id, id), eq(watches.userId, userId)) : eq(watches.id, id))
       .returning();
     return (row as WatchRecord | undefined) ?? null;
   }
-  const row = memory.watches.find((watch) => watch.id === id);
+  const row = memory.watches.find((watch) => watch.id === id && (!userId || watch.userId === userId));
   if (!row) return null;
   Object.assign(row, input, { updatedAt: now() });
   return row;
 }
 
-export async function getWatch(id: string): Promise<WatchRecord | null> {
+export async function getWatch(id: string, userId?: string): Promise<WatchRecord | null> {
   const db = getDb();
   if (db) {
-    const [row] = await (db as any).select().from(watches).where(eq(watches.id, id)).limit(1);
+    const [row] = await (db as any)
+      .select()
+      .from(watches)
+      .where(userId ? and(eq(watches.id, id), eq(watches.userId, userId)) : eq(watches.id, id))
+      .limit(1);
     return (row as WatchRecord | undefined) ?? null;
   }
-  return memory.watches.find((watch) => watch.id === id) ?? null;
+  return memory.watches.find((watch) => watch.id === id && (!userId || watch.userId === userId)) ?? null;
 }
 
 export async function listDueWatches(limit = 50): Promise<WatchRecord[]> {

@@ -2,13 +2,16 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { GET as checkGet } from '@/app/api/check/route';
 import { GET as healthGet } from '@/app/api/health/route';
 import { GET as cronGet } from '@/app/api/cron/check-watches/route';
-import { POST as watchesPost } from '@/app/api/watches/route';
+import { GET as watchesGet, POST as watchesPost } from '@/app/api/watches/route';
+import { DELETE as watchDelete, PATCH as watchPatch } from '@/app/api/watches/[id]/route';
 import { __resetMemoryRepository, createWatch, listAlertEvents, listLatestSnapshots } from '@/lib/db/repository';
 import { __setTelegramSenderForTests } from '@/lib/alerts/telegram';
 import { __setProtocolAdapterForTests } from '@/lib/risk/engine';
 import type { ProtocolAdapter } from '@/lib/protocols/types';
 
 const walletAddress = '0x0000000000000000000000000000000000000001';
+const userA = '00000000-0000-4000-8000-00000000000a';
+const userB = '00000000-0000-4000-8000-00000000000b';
 
 const mockAdapter: ProtocolAdapter = {
   protocolKey: 'aave-v3',
@@ -64,6 +67,7 @@ describe('routes', () => {
   it('/api/watches creates watch shape', async () => {
     const request = new Request('http://localhost/api/watches', {
       method: 'POST',
+      headers: { 'x-risk-sentinel-user-id': userA },
       body: JSON.stringify({
         walletAddress,
         chainKey: 'base',
@@ -76,9 +80,55 @@ describe('routes', () => {
     expect(response.status).toBe(201);
     const json = await response.json();
     expect(json.data.watch.walletAddress).toBe(walletAddress);
+    expect(json.data.watch.userId).toBe(userA);
     expect(json.data.risk.riskLevel).toBe('critical');
     expect(json.data.risk.raw.liveLikeAave.totalDebtBase).toBe('1000');
     await expect(listLatestSnapshots()).resolves.toHaveLength(1);
+  });
+
+  it('/api/watches scopes list, patch, and delete by current user', async () => {
+    const createResponse = await watchesPost(
+      new Request('http://localhost/api/watches', {
+        method: 'POST',
+        headers: { 'x-risk-sentinel-user-id': userA },
+        body: JSON.stringify({
+          walletAddress,
+          chainKey: 'base',
+          protocolKey: 'aave-v3',
+          minHealthFactor: 1.25,
+          targetHealthFactor: 1.4
+        })
+      })
+    );
+    const created = await createResponse.json();
+    const watchId = created.data.watch.id;
+
+    const otherUserList = await watchesGet(new Request('http://localhost/api/watches', { headers: { 'x-risk-sentinel-user-id': userB } }));
+    await expect(otherUserList.json()).resolves.toMatchObject({ ok: true, data: [] });
+
+    const forbiddenPatch = await watchPatch(
+      new Request(`http://localhost/api/watches/${watchId}`, {
+        method: 'PATCH',
+        headers: { 'x-risk-sentinel-user-id': userB },
+        body: JSON.stringify({ minHealthFactor: 1.1 })
+      }),
+      { params: Promise.resolve({ id: watchId }) }
+    );
+    expect(forbiddenPatch.status).toBe(404);
+
+    const forbiddenDelete = await watchDelete(
+      new Request(`http://localhost/api/watches/${watchId}`, {
+        method: 'DELETE',
+        headers: { 'x-risk-sentinel-user-id': userB }
+      }),
+      { params: Promise.resolve({ id: watchId }) }
+    );
+    expect(forbiddenDelete.status).toBe(404);
+
+    const ownerList = await watchesGet(new Request('http://localhost/api/watches', { headers: { 'x-risk-sentinel-user-id': userA } }));
+    const ownerJson = await ownerList.json();
+    expect(ownerJson.data).toHaveLength(1);
+    expect(ownerJson.data[0]).toMatchObject({ id: watchId, userId: userA });
   });
 
   it('/api/check returns mocked Aave risk shape', async () => {

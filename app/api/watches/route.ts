@@ -4,6 +4,7 @@ import { checkPositionRisk } from '@/lib/risk/engine';
 import { serializePositionRisk } from '@/lib/risk/format';
 import { createWatch, listWatches, storeRiskSnapshot } from '@/lib/db/repository';
 import { createWatchSchema } from '@/lib/validation/schemas';
+import { getCurrentUserId } from '@/lib/auth';
 
 function serializeSnapshot(snapshot: Awaited<ReturnType<typeof storeRiskSnapshot>>) {
   return {
@@ -13,12 +14,20 @@ function serializeSnapshot(snapshot: Awaited<ReturnType<typeof storeRiskSnapshot
   };
 }
 
-export async function GET() {
-  const watches = await listWatches();
+export async function GET(request: Request) {
+  const userId = getCurrentUserId(request.headers);
+  if (!userId) {
+    return Response.json({ ok: false, error: 'Unauthorized.' }, { status: 401 });
+  }
+  const watches = await listWatches(userId);
   return Response.json({ ok: true, data: watches });
 }
 
 export async function POST(request: Request) {
+  const userId = getCurrentUserId(request.headers);
+  if (!userId) {
+    return Response.json({ ok: false, error: 'Unauthorized.' }, { status: 401 });
+  }
   const body = await request.json().catch(() => null);
   const parsed = createWatchSchema.safeParse(body);
   if (!parsed.success) {
@@ -27,6 +36,7 @@ export async function POST(request: Request) {
 
   const watch = await createWatch({
     ...parsed.data,
+    userId,
     minHealthFactor: parsed.data.minHealthFactor.toString(),
     targetHealthFactor: parsed.data.targetHealthFactor.toString(),
     telegramChatId: parsed.data.telegramChatId || null

@@ -11,6 +11,9 @@ export const env = {
   get appBaseUrl() {
     return process.env.APP_BASE_URL ?? 'http://localhost:3000';
   },
+  get devUserId() {
+    return process.env.RISK_SENTINEL_DEV_USER_ID;
+  },
   get telegramBotToken() {
     return process.env.TELEGRAM_BOT_TOKEN;
   },
