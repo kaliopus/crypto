@@ -220,5 +220,13 @@ describe('routes', () => {
     await expect(listLatestSnapshots()).resolves.toHaveLength(1);
     const alerts = await listAlertEvents();
     expect(alerts[0]).toMatchObject({ status: 'sent', channel: 'telegram' });
+
+    const secondResponse = await cronGet(
+      new Request('http://localhost/api/cron/check-watches', {
+        headers: { authorization: 'Bearer test-secret' }
+      })
+    );
+    const secondJson = await secondResponse.json();
+    expect(secondJson).toMatchObject({ ok: true, checked: 0, alertsSent: 0, failed: 0 });
   });
 });

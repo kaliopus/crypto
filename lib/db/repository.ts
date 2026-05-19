@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, lte } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { getDb } from './index';
 import { alertEvents, riskSnapshots, watches, type NewWatch, type RiskSnapshot, type Watch } from './schema';
@@ -43,7 +43,9 @@ function normalizeWatch(input: NewWatch): WatchRecord {
     targetHealthFactor: String(input.targetHealthFactor ?? '1.40'),
     telegramChatId: input.telegramChatId ?? null,
     alertCooldownMinutes: input.alertCooldownMinutes ?? 30,
+    checkIntervalMinutes: input.checkIntervalMinutes ?? 15,
     isActive: input.isActive ?? true,
+    nextCheckAt: input.nextCheckAt ?? date,
     lastCheckedAt: null,
     lastAlertedAt: null,
     createdAt: date,
@@ -75,7 +77,19 @@ export async function listWatches(userId: string): Promise<WatchRecord[]> {
 
 export async function updateWatch(
   id: string,
-  input: Partial<Pick<WatchRecord, 'minHealthFactor' | 'targetHealthFactor' | 'telegramChatId' | 'isActive' | 'lastCheckedAt' | 'lastAlertedAt'>>,
+  input: Partial<
+    Pick<
+      WatchRecord,
+      | 'minHealthFactor'
+      | 'targetHealthFactor'
+      | 'telegramChatId'
+      | 'checkIntervalMinutes'
+      | 'isActive'
+      | 'nextCheckAt'
+      | 'lastCheckedAt'
+      | 'lastAlertedAt'
+    >
+  >,
   userId?: string
 ): Promise<WatchRecord | null> {
   const db = getDb();
@@ -109,9 +123,18 @@ export async function getWatch(id: string, userId?: string): Promise<WatchRecord
 export async function listDueWatches(limit = 50): Promise<WatchRecord[]> {
   const db = getDb();
   if (db) {
-    return (await (db as any).select().from(watches).where(eq(watches.isActive, true)).orderBy(watches.lastCheckedAt).limit(limit)) as WatchRecord[];
+    return (await (db as any)
+      .select()
+      .from(watches)
+      .where(and(eq(watches.isActive, true), lte(watches.nextCheckAt, now())))
+      .orderBy(asc(watches.nextCheckAt))
+      .limit(limit)) as WatchRecord[];
   }
-  return memory.watches.filter((watch) => watch.isActive).slice(0, limit);
+  const dueAt = now().getTime();
+  return memory.watches
+    .filter((watch) => watch.isActive && watch.nextCheckAt.getTime() <= dueAt)
+    .sort((a, b) => a.nextCheckAt.getTime() - b.nextCheckAt.getTime())
+    .slice(0, limit);
 }
 
 export async function storeRiskSnapshot(watchId: string | null, risk: PositionRisk): Promise<RiskSnapshot> {

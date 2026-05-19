@@ -26,13 +26,15 @@ export const watches = pgTable(
     targetHealthFactor: numeric('target_health_factor').notNull().default('1.40'),
     telegramChatId: text('telegram_chat_id'),
     alertCooldownMinutes: integer('alert_cooldown_minutes').notNull().default(30),
+    checkIntervalMinutes: integer('check_interval_minutes').notNull().default(15),
     isActive: boolean('is_active').notNull().default(true),
+    nextCheckAt: timestamp('next_check_at', { withTimezone: true }).defaultNow().notNull(),
     lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
     lastAlertedAt: timestamp('last_alerted_at', { withTimezone: true }),
     ...timestamps
   },
   (table) => ({
-    activeLastCheckedIdx: index('watches_active_last_checked_idx').on(table.isActive, table.lastCheckedAt),
+    activeNextCheckIdx: index('watches_active_next_check_idx').on(table.isActive, table.nextCheckAt),
     identityIdx: index('watches_identity_idx').on(table.walletAddress, table.chainKey, table.protocolKey)
   })
 );

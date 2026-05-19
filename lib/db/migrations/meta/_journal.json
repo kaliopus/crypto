@@ -8,6 +8,13 @@
       "when": 1779213501559,
       "tag": "0000_wakeful_sentry",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779221963509,
+      "tag": "0001_stiff_harrier",
+      "breakpoints": true
     }
   ]
 }

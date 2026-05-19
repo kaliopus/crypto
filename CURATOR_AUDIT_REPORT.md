@@ -466,7 +466,7 @@ Status:
 
 1. Add distributed cron lock. **Addressed for Postgres deployments with `pg_try_advisory_lock`; in-memory fallback remains only for test/demo mode.**
 2. Add alert idempotency/outbox.
-3. Add due predicate for watches.
+3. Add due predicate for watches. **Addressed with `checkIntervalMinutes`, `nextCheckAt`, and due-only worker selection.**
 4. Add Telegram retry/backoff and failure status.
 5. Add worker run audit table.
 

@@ -7,6 +7,12 @@ import { getLastSnapshotForWatch, listDueWatches, storeAlertEvent, storeRiskSnap
 import { logger } from '@/lib/logger';
 import { withWorkerLock } from './locks';
 
+const MINUTE_MS = 60_000;
+
+function getNextCheckAt(checkIntervalMinutes: number) {
+  return new Date(Date.now() + checkIntervalMinutes * MINUTE_MS);
+}
+
 export async function checkDueWatches() {
   const result = await withWorkerLock(async () => {
     const watches = await listDueWatches(50);
@@ -64,10 +70,16 @@ export async function checkDueWatches() {
               });
               summary.alertsSuppressed += 1;
             }
-            await updateWatch(watch.id, { lastCheckedAt: new Date() });
+            await updateWatch(watch.id, { lastCheckedAt: new Date(), nextCheckAt: getNextCheckAt(watch.checkIntervalMinutes) });
             summary.checked += 1;
           } catch (error) {
             summary.failed += 1;
+            await updateWatch(watch.id, { lastCheckedAt: new Date(), nextCheckAt: getNextCheckAt(watch.checkIntervalMinutes) }).catch((updateError) => {
+              logger.error('watch_reschedule_failed', {
+                watchId: watch.id,
+                error: updateError instanceof Error ? updateError.message : String(updateError)
+              });
+            });
             logger.error('watch_check_failed', { watchId: watch.id, error: error instanceof Error ? error.message : String(error) });
           }
         })

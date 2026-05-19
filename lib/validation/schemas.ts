@@ -4,6 +4,10 @@ export const chainKeySchema = z.enum(['ethereum', 'base', 'arbitrum', 'optimism'
 export const protocolKeySchema = z.enum(['aave-v3']);
 export const walletAddressSchema = z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid EVM wallet address');
 export const healthFactorSchema = z.coerce.number().min(1.01).max(10);
+const MIN_CHECK_INTERVAL_MINUTES = 5;
+const MAX_CHECK_INTERVAL_MINUTES = 1440;
+const DEFAULT_CHECK_INTERVAL_MINUTES = 15;
+export const checkIntervalMinutesSchema = z.coerce.number().int().min(MIN_CHECK_INTERVAL_MINUTES).max(MAX_CHECK_INTERVAL_MINUTES);
 
 export const checkQuerySchema = z.object({
   chain: chainKeySchema,
@@ -18,12 +22,14 @@ export const createWatchSchema = z.object({
   protocolKey: protocolKeySchema.default('aave-v3'),
   minHealthFactor: z.coerce.number().min(1).max(5).default(1.25),
   targetHealthFactor: healthFactorSchema.default(1.4),
+  checkIntervalMinutes: checkIntervalMinutesSchema.default(DEFAULT_CHECK_INTERVAL_MINUTES),
   telegramChatId: z.string().trim().min(1).max(64).optional().or(z.literal(''))
 });
 
 export const updateWatchSchema = z.object({
   minHealthFactor: z.coerce.number().min(1).max(5).optional(),
   targetHealthFactor: healthFactorSchema.optional(),
+  checkIntervalMinutes: checkIntervalMinutesSchema.optional(),
   telegramChatId: z.string().trim().max(64).optional().or(z.literal('')),
   isActive: z.boolean().optional()
 });
