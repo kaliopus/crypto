@@ -34,7 +34,15 @@ const mockAdapter: ProtocolAdapter = {
         explanation: 'Estimated action needed to restore Health Factor.',
         assumptions: ['mocked adapter']
       },
-      raw: { mocked: true }
+      raw: {
+        mocked: true,
+        liveLikeAave: {
+          blockNumber: 123n,
+          totalCollateralBase: 1500n,
+          totalDebtBase: 1000n,
+          nested: [1n, { value: 2n }]
+        }
+      }
     };
   }
 };
@@ -69,6 +77,7 @@ describe('routes', () => {
     const json = await response.json();
     expect(json.data.watch.walletAddress).toBe(walletAddress);
     expect(json.data.risk.riskLevel).toBe('critical');
+    expect(json.data.risk.raw.liveLikeAave.totalDebtBase).toBe('1000');
     await expect(listLatestSnapshots()).resolves.toHaveLength(1);
   });
 
@@ -88,6 +97,7 @@ describe('routes', () => {
         riskLevel: 'critical'
       }
     });
+    expect(json.data.raw.liveLikeAave.totalCollateralBase).toBe('1500');
   });
 
   it('cron rejects missing secret', async () => {

@@ -1,4 +1,5 @@
 import type { PositionRisk } from '@/lib/protocols/types';
+import { serializeJsonSafe } from '@/lib/json/serialize';
 
 export function shortAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -25,6 +26,7 @@ export function serializePositionRisk(risk: PositionRisk) {
           repayToTargetBase: risk.rescuePlan.repayToTargetBase?.toString() ?? null,
           collateralToTargetBase: risk.rescuePlan.collateralToTargetBase?.toString() ?? null
         }
-      : null
+      : null,
+    raw: serializeJsonSafe(risk.raw)
   };
 }
