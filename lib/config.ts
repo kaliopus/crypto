@@ -17,6 +17,9 @@ export const env = {
   get telegramBotToken() {
     return process.env.TELEGRAM_BOT_TOKEN;
   },
+  get telegramWebhookSecret() {
+    return process.env.TELEGRAM_WEBHOOK_SECRET;
+  },
   get stripeSecretKey() {
     return process.env.STRIPE_SECRET_KEY;
   },

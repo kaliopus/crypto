@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { GET as checkGet } from '@/app/api/check/route';
 import { GET as healthGet } from '@/app/api/health/route';
 import { GET as cronGet } from '@/app/api/cron/check-watches/route';
+import { POST as telegramWebhookPost } from '@/app/api/telegram/webhook/route';
 import { GET as watchesGet, POST as watchesPost } from '@/app/api/watches/route';
 import { DELETE as watchDelete, PATCH as watchPatch } from '@/app/api/watches/[id]/route';
 import { __resetMemoryRepository, createWatch, listAlertEvents, listLatestSnapshots } from '@/lib/db/repository';
@@ -57,6 +58,7 @@ beforeEach(() => {
   __setProtocolAdapterForTests('aave-v3', mockAdapter);
   __setTelegramSenderForTests(null);
   delete process.env.CRON_SECRET;
+  delete process.env.TELEGRAM_WEBHOOK_SECRET;
 });
 
 describe('routes', () => {
@@ -190,6 +192,36 @@ describe('routes', () => {
     process.env.CRON_SECRET = 'test-secret';
     const response = await cronGet(new Request('http://localhost/api/cron/check-watches'));
     expect(response.status).toBe(401);
+  });
+
+  it('telegram webhook rejects invalid secret token', async () => {
+    process.env.TELEGRAM_WEBHOOK_SECRET = 'telegram-secret';
+
+    const response = await telegramWebhookPost(
+      new Request('http://localhost/api/telegram/webhook', {
+        method: 'POST',
+        headers: { 'x-telegram-bot-api-secret-token': 'wrong-secret' },
+        body: JSON.stringify({ message: { chat: { id: 123 } } })
+      })
+    );
+
+    expect(response.status).toBe(401);
+  });
+
+  it('telegram webhook accepts valid secret token', async () => {
+    process.env.TELEGRAM_WEBHOOK_SECRET = 'telegram-secret';
+
+    const response = await telegramWebhookPost(
+      new Request('http://localhost/api/telegram/webhook', {
+        method: 'POST',
+        headers: { 'x-telegram-bot-api-secret-token': 'telegram-secret' },
+        body: JSON.stringify({ message: { chat: { id: 123 } } })
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.chatId).toBe(123);
   });
 
   it('cron processes due watches, stores snapshots, and sends mocked Telegram alert', async () => {

@@ -47,6 +47,7 @@ Required for production:
 - `APP_BASE_URL`
 - one or more RPC URLs: `ETHEREUM_RPC_URL`, `BASE_RPC_URL`, `ARBITRUM_RPC_URL`, `OPTIMISM_RPC_URL`
 - `TELEGRAM_BOT_TOKEN` for real alerts
+- `TELEGRAM_WEBHOOK_SECRET` for Telegram webhook verification
 
 Stripe variables are scaffolded but checkout is a stub until real pricing is configured.
 
@@ -66,7 +67,7 @@ If `DATABASE_URL` is not set, the app uses an in-memory repository for local dem
 1. Create a bot with BotFather.
 2. Put the token into `TELEGRAM_BOT_TOKEN`.
 3. Message the bot from your Telegram account or group.
-4. Point Telegram webhook updates to `/api/telegram/webhook` or inspect bot updates manually.
+4. Point Telegram webhook updates to `/api/telegram/webhook` with Telegram `secret_token` set to `TELEGRAM_WEBHOOK_SECRET`, or inspect bot updates manually.
 5. Use the returned `chat.id` as `telegramChatId` when creating a watch.
 
 ## API Examples
