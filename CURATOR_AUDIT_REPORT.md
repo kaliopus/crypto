@@ -464,7 +464,7 @@ Status:
 
 ### Phase 1: Reliability Hardening
 
-1. Add distributed cron lock.
+1. Add distributed cron lock. **Addressed for Postgres deployments with `pg_try_advisory_lock`; in-memory fallback remains only for test/demo mode.**
 2. Add alert idempotency/outbox.
 3. Add due predicate for watches.
 4. Add Telegram retry/backoff and failure status.
