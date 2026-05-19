@@ -7,6 +7,7 @@ import { DELETE as watchDelete, PATCH as watchPatch } from '@/app/api/watches/[i
 import { __resetMemoryRepository, createWatch, listAlertEvents, listLatestSnapshots } from '@/lib/db/repository';
 import { __setTelegramSenderForTests } from '@/lib/alerts/telegram';
 import { __setProtocolAdapterForTests } from '@/lib/risk/engine';
+import { __resetRateLimitForTests } from '@/lib/security/rateLimit';
 import type { ProtocolAdapter } from '@/lib/protocols/types';
 
 const walletAddress = '0x0000000000000000000000000000000000000001';
@@ -52,6 +53,7 @@ const mockAdapter: ProtocolAdapter = {
 
 beforeEach(() => {
   __resetMemoryRepository();
+  __resetRateLimitForTests();
   __setProtocolAdapterForTests('aave-v3', mockAdapter);
   __setTelegramSenderForTests(null);
   delete process.env.CRON_SECRET;
@@ -148,6 +150,40 @@ describe('routes', () => {
       }
     });
     expect(json.data.raw.liveLikeAave.totalCollateralBase).toBe('1500');
+  });
+
+  it('/api/check rate limits by client IP', async () => {
+    let response = new Response();
+    for (let index = 0; index < 31; index += 1) {
+      response = await checkGet(
+        new Request(`http://localhost/api/check?chain=base&wallet=${walletAddress}&protocol=aave-v3&targetHealthFactor=1.4`, {
+          headers: { 'x-forwarded-for': '203.0.113.10' }
+        })
+      );
+    }
+    expect(response.status).toBe(429);
+    expect(response.headers.get('retry-after')).toBeTruthy();
+  });
+
+  it('/api/watches rate limits creation by current user', async () => {
+    let response = new Response();
+    for (let index = 0; index < 6; index += 1) {
+      response = await watchesPost(
+        new Request('http://localhost/api/watches', {
+          method: 'POST',
+          headers: { 'x-risk-sentinel-user-id': userA, 'x-forwarded-for': '203.0.113.20' },
+          body: JSON.stringify({
+            walletAddress,
+            chainKey: 'base',
+            protocolKey: 'aave-v3',
+            minHealthFactor: 1.25,
+            targetHealthFactor: 1.4
+          })
+        })
+      );
+    }
+    expect(response.status).toBe(429);
+    expect(response.headers.get('retry-after')).toBeTruthy();
   });
 
   it('cron rejects missing secret', async () => {

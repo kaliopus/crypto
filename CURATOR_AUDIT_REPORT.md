@@ -472,7 +472,7 @@ Status:
 
 ### Phase 2: Security And Abuse Controls
 
-1. Rate limit public endpoints.
+1. Rate limit public endpoints. **Local in-memory limiter added for `/api/check` and `POST /api/watches`; production still needs distributed Redis/Upstash limiting for multi-instance deployments.**
 2. Add Telegram webhook verification.
 3. Tighten Telegram chat ID validation/binding.
 4. Improve logger redaction.

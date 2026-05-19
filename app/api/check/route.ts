@@ -3,8 +3,12 @@ export const runtime = 'nodejs';
 import { checkPositionRisk } from '@/lib/risk/engine';
 import { serializePositionRisk } from '@/lib/risk/format';
 import { checkQuerySchema } from '@/lib/validation/schemas';
+import { checkRateLimit, rateLimitResponse } from '@/lib/security/rateLimit';
 
 export async function GET(request: Request) {
+  const rateLimit = checkRateLimit(request, { key: 'api-check', limit: 30, windowMs: 60_000 });
+  if (!rateLimit.allowed) return rateLimitResponse(rateLimit.retryAfterSeconds);
+
   const url = new URL(request.url);
   const parsed = checkQuerySchema.safeParse(Object.fromEntries(url.searchParams));
   if (!parsed.success) {
