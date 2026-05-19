@@ -1,0 +1,43 @@
+export const runtime = 'nodejs';
+
+import { checkPositionRisk } from '@/lib/risk/engine';
+import { serializePositionRisk } from '@/lib/risk/format';
+import { createWatch, listWatches, storeRiskSnapshot } from '@/lib/db/repository';
+import { createWatchSchema } from '@/lib/validation/schemas';
+
+function serializeSnapshot(snapshot: Awaited<ReturnType<typeof storeRiskSnapshot>>) {
+  return {
+    ...snapshot,
+    blockNumber: snapshot.blockNumber?.toString() ?? null,
+    createdAt: snapshot.createdAt.toISOString()
+  };
+}
+
+export async function GET() {
+  const watches = await listWatches();
+  return Response.json({ ok: true, data: watches });
+}
+
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => null);
+  const parsed = createWatchSchema.safeParse(body);
+  if (!parsed.success) {
+    return Response.json({ ok: false, error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const watch = await createWatch({
+    ...parsed.data,
+    minHealthFactor: parsed.data.minHealthFactor.toString(),
+    targetHealthFactor: parsed.data.targetHealthFactor.toString(),
+    telegramChatId: parsed.data.telegramChatId || null
+  });
+  const risk = await checkPositionRisk({
+    protocolKey: 'aave-v3',
+    chainKey: watch.chainKey,
+    walletAddress: watch.walletAddress as `0x${string}`,
+    targetHealthFactor: Number(watch.targetHealthFactor)
+  });
+  const snapshot = await storeRiskSnapshot(watch.id, risk);
+
+  return Response.json({ ok: true, data: { watch, snapshot: serializeSnapshot(snapshot), risk: serializePositionRisk(risk) } }, { status: 201 });
+}

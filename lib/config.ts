@@ -1,0 +1,30 @@
+export const env = {
+  get databaseUrl() {
+    return process.env.DATABASE_URL;
+  },
+  get cronSecret() {
+    return process.env.CRON_SECRET;
+  },
+  get appBaseUrl() {
+    return process.env.APP_BASE_URL ?? 'http://localhost:3000';
+  },
+  get telegramBotToken() {
+    return process.env.TELEGRAM_BOT_TOKEN;
+  },
+  get stripeSecretKey() {
+    return process.env.STRIPE_SECRET_KEY;
+  },
+  get stripeWebhookSecret() {
+    return process.env.STRIPE_WEBHOOK_SECRET;
+  },
+  get stripePublishableKey() {
+    return process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  }
+};
+
+export function requireCronSecret() {
+  if (!env.cronSecret) {
+    throw new Error('CRON_SECRET is required for cron routes.');
+  }
+  return env.cronSecret;
+}
