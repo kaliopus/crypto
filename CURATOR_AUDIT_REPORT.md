@@ -457,14 +457,14 @@ Status:
 1. Fix collateral ceiling division. **Addressed in current Phase 0 patch.**
 2. Fix alert engine so user `minHealthFactor` overrides global safe band. **Addressed in current Phase 0 patch.**
 3. Fail closed in production when `DATABASE_URL` is missing. **Addressed in current Phase 0 patch.**
-4. Add auth/user ownership boundary for watch CRUD. **Temporary scoped boundary addressed; real auth provider still pending.**
+4. Add auth/user ownership boundary for watch CRUD. **Production now rejects forged dev header/cookie/env auth and accepts only signed auth cookie; full auth provider or SIWE is still pending.**
 5. Add `.swarm/` ignore commit. **Addressed in commit `5052149`.**
 6. Fix deterministic latest snapshot ordering. **Addressed in current Phase 0 patch.**
 7. Add non-interactive lint gate. **Addressed in current Phase 0 patch.**
 
 ### Phase 1: Reliability Hardening
 
-1. Add distributed cron lock. **Addressed for Postgres deployments with `pg_try_advisory_lock`; in-memory fallback remains only for test/demo mode.**
+1. Add distributed cron lock. **Addressed for Postgres deployments with transaction-scoped `pg_try_advisory_xact_lock`; in-memory fallback remains only for test/demo mode.**
 2. Add alert idempotency/outbox.
 3. Add due predicate for watches. **Addressed with `checkIntervalMinutes`, `nextCheckAt`, and due-only worker selection.**
 4. Add Telegram retry/backoff and failure status.
@@ -472,11 +472,11 @@ Status:
 
 ### Phase 2: Security And Abuse Controls
 
-1. Rate limit public endpoints. **Local in-memory limiter added for `/api/check` and `POST /api/watches`; production still needs distributed Redis/Upstash limiting for multi-instance deployments.**
+1. Rate limit public endpoints. **Addressed for `/api/check` and `POST /api/watches` with Upstash Redis sliding-window limiter; production fails closed with 503 if distributed limiter env is missing.**
 2. Add Telegram webhook verification. **Addressed with `TELEGRAM_WEBHOOK_SECRET` and Telegram secret-token header verification.**
 3. Tighten Telegram chat ID validation/binding.
 4. Improve logger redaction.
-5. Add CI with test/build/lint/audit.
+5. Add CI with test/build/lint/audit. **Addressed with GitHub CI for npm ci, lint, typecheck, tests, build, and high/critical audit gate.**
 
 ### Phase 3: Product And QA
 

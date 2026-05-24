@@ -5,7 +5,7 @@ import { serializePositionRisk } from '@/lib/risk/format';
 import { createWatch, listWatches, storeRiskSnapshot } from '@/lib/db/repository';
 import { createWatchSchema } from '@/lib/validation/schemas';
 import { getCurrentUserId } from '@/lib/auth';
-import { checkRateLimit, rateLimitResponse } from '@/lib/security/rateLimit';
+import { checkRateLimit, rateLimitMisconfiguredResponse, rateLimitResponse } from '@/lib/security/rateLimit';
 
 function serializeSnapshot(snapshot: Awaited<ReturnType<typeof storeRiskSnapshot>>) {
   return {
@@ -29,7 +29,8 @@ export async function POST(request: Request) {
   if (!userId) {
     return Response.json({ ok: false, error: 'Unauthorized.' }, { status: 401 });
   }
-  const rateLimit = checkRateLimit(request, { key: 'api-watches-create', limit: 5, windowMs: 60_000, userId });
+  const rateLimit = await checkRateLimit(request, { key: 'api-watches-create', limit: 5, windowMs: 60_000, userId });
+  if (rateLimit.misconfigured) return rateLimitMisconfiguredResponse();
   if (!rateLimit.allowed) return rateLimitResponse(rateLimit.retryAfterSeconds);
 
   const body = await request.json().catch(() => null);

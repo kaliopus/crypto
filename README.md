@@ -44,10 +44,12 @@ Required for production:
 
 - `DATABASE_URL`
 - `CRON_SECRET`
+- `AUTH_SECRET`
 - `APP_BASE_URL`
 - one or more RPC URLs: `ETHEREUM_RPC_URL`, `BASE_RPC_URL`, `ARBITRUM_RPC_URL`, `OPTIMISM_RPC_URL`
 - `TELEGRAM_BOT_TOKEN` for real alerts
 - `TELEGRAM_WEBHOOK_SECRET` for Telegram webhook verification
+- `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` for distributed rate limiting
 
 Stripe variables are scaffolded but checkout is a stub until real pricing is configured.
 
@@ -60,7 +62,15 @@ npm run db:generate
 npm run db:migrate
 ```
 
-If `DATABASE_URL` is not set, the app uses an in-memory repository for local demos and tests. That mode is not durable.
+Production env can be checked before deployment with:
+
+```bash
+npm run env:check
+```
+
+If `DATABASE_URL` is not set, the app uses an in-memory repository only for local demos and tests. That mode is disabled in production.
+
+`vercel.json` registers `/api/cron/check-watches` every 15 minutes. Confirm your Vercel plan supports that frequency before relying on it in production.
 
 ## Telegram Bot
 

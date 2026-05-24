@@ -3,10 +3,11 @@ export const runtime = 'nodejs';
 import { checkPositionRisk } from '@/lib/risk/engine';
 import { serializePositionRisk } from '@/lib/risk/format';
 import { checkQuerySchema } from '@/lib/validation/schemas';
-import { checkRateLimit, rateLimitResponse } from '@/lib/security/rateLimit';
+import { checkRateLimit, rateLimitMisconfiguredResponse, rateLimitResponse } from '@/lib/security/rateLimit';
 
 export async function GET(request: Request) {
-  const rateLimit = checkRateLimit(request, { key: 'api-check', limit: 30, windowMs: 60_000 });
+  const rateLimit = await checkRateLimit(request, { key: 'api-check', limit: 30, windowMs: 60_000 });
+  if (rateLimit.misconfigured) return rateLimitMisconfiguredResponse();
   if (!rateLimit.allowed) return rateLimitResponse(rateLimit.retryAfterSeconds);
 
   const url = new URL(request.url);
