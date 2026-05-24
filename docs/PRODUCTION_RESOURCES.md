@@ -23,6 +23,18 @@ These cannot be safely invented in code:
 - Vercel project environment variables
 - Stripe keys, if paid checkout is enabled
 
+## Supabase Status
+
+Supabase MCP is configured in `.mcp.json` with the hosted server URL. The server endpoint is reachable and returns `401` without authentication, which is the expected unauthenticated response.
+
+The Supabase CLI is currently available through `npx supabase`, but it is not authenticated. `npx supabase projects list` fails because no access token is available. Authenticate the configured Supabase MCP server through the MCP client auth flow, or run `npx supabase login` / set `SUPABASE_ACCESS_TOKEN`, before creating the production database project.
+
+After the Supabase project exists, scope the MCP URL to that project and use read-only mode for routine inspection:
+
+```json
+"url": "https://mcp.supabase.com/mcp?project_ref=<project-ref>&read_only=true"
+```
+
 ## Vercel Status
 
 `vercel deploy --prod --yes` was attempted, but the local Vercel token is invalid. Run `vercel login`, then set the production env vars and deploy.
