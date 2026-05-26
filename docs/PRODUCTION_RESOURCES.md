@@ -25,15 +25,17 @@ These cannot be safely invented in code:
 
 ## Supabase Status
 
-Supabase MCP is configured in `.mcp.json` with the hosted server URL. The server endpoint is reachable and returns `401` without authentication, which is the expected unauthenticated response.
+Supabase MCP is configured in `.mcp.json` with the hosted server URL scoped to project `ubammuafbzewwhiizbgx` in read-only mode for routine inspection.
 
-The Supabase CLI is currently available through `npx supabase`, but it is not authenticated. `npx supabase projects list` fails because no access token is available. Authenticate the configured Supabase MCP server through the MCP client auth flow, or run `npx supabase login` / set `SUPABASE_ACCESS_TOKEN`, before creating the production database project.
+The Supabase project `kaliopus's Project` has been restored and is `ACTIVE_HEALTHY`.
 
-After the Supabase project exists, scope the MCP URL to that project and use read-only mode for routine inspection:
+Applied remote migrations:
 
-```json
-"url": "https://mcp.supabase.com/mcp?project_ref=<project-ref>&read_only=true"
-```
+- `wakeful_sentry`
+- `stiff_harrier`
+- `nasty_scream`
+
+The project database host is `db.ubammuafbzewwhiizbgx.supabase.co`. Supabase MCP does not expose the database password, so `DATABASE_URL` still needs the real Supabase connection string from the dashboard or CLI auth before the Next.js app can connect directly.
 
 ## Vercel Status
 

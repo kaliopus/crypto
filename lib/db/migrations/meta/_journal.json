@@ -15,6 +15,13 @@
       "when": 1779221963509,
       "tag": "0001_stiff_harrier",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779822862742,
+      "tag": "0002_nasty_scream",
+      "breakpoints": true
     }
   ]
 }

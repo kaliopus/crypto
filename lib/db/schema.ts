@@ -34,6 +34,7 @@ export const watches = pgTable(
     ...timestamps
   },
   (table) => ({
+    userIdx: index('watches_user_id_idx').on(table.userId),
     activeNextCheckIdx: index('watches_active_next_check_idx').on(table.isActive, table.nextCheckAt),
     identityIdx: index('watches_identity_idx').on(table.walletAddress, table.chainKey, table.protocolKey)
   })
@@ -69,28 +70,41 @@ export const riskSnapshots = pgTable(
   })
 );
 
-export const alertEvents = pgTable('alert_events', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  watchId: uuid('watch_id').references(() => watches.id),
-  snapshotId: uuid('snapshot_id').references(() => riskSnapshots.id),
-  channel: text('channel').notNull(),
-  status: text('status').notNull(),
-  reason: text('reason'),
-  payloadJson: jsonb('payload_json').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
-});
+export const alertEvents = pgTable(
+  'alert_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    watchId: uuid('watch_id').references(() => watches.id),
+    snapshotId: uuid('snapshot_id').references(() => riskSnapshots.id),
+    channel: text('channel').notNull(),
+    status: text('status').notNull(),
+    reason: text('reason'),
+    payloadJson: jsonb('payload_json').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => ({
+    watchIdx: index('alert_events_watch_id_idx').on(table.watchId),
+    snapshotIdx: index('alert_events_snapshot_id_idx').on(table.snapshotId)
+  })
+);
 
-export const billingSubscriptions = pgTable('billing_subscriptions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id).notNull(),
-  provider: text('provider').notNull().default('stripe'),
-  providerCustomerId: text('provider_customer_id'),
-  providerSubscriptionId: text('provider_subscription_id'),
-  status: text('status').notNull().default('free'),
-  planKey: text('plan_key').notNull().default('free'),
-  currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
-  ...timestamps
-});
+export const billingSubscriptions = pgTable(
+  'billing_subscriptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').references(() => users.id).notNull(),
+    provider: text('provider').notNull().default('stripe'),
+    providerCustomerId: text('provider_customer_id'),
+    providerSubscriptionId: text('provider_subscription_id'),
+    status: text('status').notNull().default('free'),
+    planKey: text('plan_key').notNull().default('free'),
+    currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
+    ...timestamps
+  },
+  (table) => ({
+    userIdx: index('billing_subscriptions_user_id_idx').on(table.userId)
+  })
+);
 
 export type Watch = typeof watches.$inferSelect;
 export type NewWatch = typeof watches.$inferInsert;
