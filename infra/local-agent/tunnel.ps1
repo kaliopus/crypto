@@ -9,8 +9,8 @@
 #     powershell -ExecutionPolicy Bypass -File .\tunnel.ps1
 
 $KeyPath = "$env:USERPROFILE\.ssh\whiterabbit_tunnel"   # your PRIVATE key (no .pub)
-$PodIp   = "216.243.220.230"                             # pod public IP
-$SshPort = "14979"                                       # pod SSH port (the 22 mapping)
+$PodIp   = "103.207.149.107"                             # pod public IP
+$SshPort = "17141"                                       # pod SSH port (the 22 mapping) — changes on stop/start, check `runpodctl pod get` if it stops working
 
 Write-Host "Opening SSH tunnel to $PodIp`:$SshPort ..." -ForegroundColor Cyan
 Write-Host "Keep this window OPEN. Local port 8000 -> pod's 127.0.0.1:8000" -ForegroundColor Yellow
