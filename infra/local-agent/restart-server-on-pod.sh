@@ -24,16 +24,16 @@ pkill -f "$BIN" 2>/dev/null || true
 sleep 3
 
 echo "[2/3] starting llama-server with --jinja (tool calling enabled)..."
-# --chat-template llama3 forces llama.cpp's known-good built-in llama3 template
-# instead of the one embedded in the GGUF, which failed to set
-# add_generation_prompt and produced garbled/off-topic output. --jinja stays on
-# so tool calling keeps working.
+# Do NOT pass --chat-template here: it takes a Jinja template *source string*,
+# not a built-in template name. Passing a name like "llama3" renders to that
+# literal text and silently discards every message. The GGUF's own template is
+# correct, so --jinja alone is what you want.
 cd /opt/llama.cpp
 setsid nohup "$BIN" \
   -hf "$MODEL" \
   --host 127.0.0.1 --port 8000 \
   --api-key "$LLMKEY" \
-  --jinja --chat-template llama3 -fa on \
+  --jinja -fa on \
   -ngl 99 -c 16384 \
   > /tmp/llama-server.log 2>&1 &
 
