@@ -19,7 +19,16 @@ set -a; source .env; set +a
 : "${VLLM_API_KEY:?set VLLM_API_KEY in .env}"
 : "${HF_TOKEN:?set HF_TOKEN in .env}"
 
-echo "Deploying $MODEL_ID into a confidential H100 VM..."
+# The GPU flag's exact value isn't fixed here on purpose: Phala's available
+# GPU tiers and their CLI codes have changed before (H100 was on the pricing
+# page earlier in 2026 and has since disappeared from self-serve — H200 is
+# the current entry tier). Run `phala instance-types` to see what's
+# actually orderable right now and set GPU_TYPE to the code it prints
+# (commonly something like `h200:1`), e.g.:
+#   GPU_TYPE=h200:1 ./deploy.sh
+: "${GPU_TYPE:?Run 'phala instance-types' first to see current GPU codes/pricing, then re-run as GPU_TYPE=<code> ./deploy.sh (e.g. GPU_TYPE=h200:1)}"
+
+echo "Deploying $MODEL_ID into a confidential $GPU_TYPE VM..."
 
 phala cvms create \
   --name private-llm-70b \
@@ -28,8 +37,8 @@ phala cvms create \
   --env HF_TOKEN="$HF_TOKEN" \
   --env MODEL_ID="$MODEL_ID" \
   --env MAX_MODEL_LEN="${MAX_MODEL_LEN:-16384}" \
-  --vcpu 16 --memory 65536 --disk 200 \
-  --gpu h100:1
+  --vcpu "${VCPU:-24}" --memory "${MEMORY_MB:-196608}" --disk "${DISK_GB:-200}" \
+  --gpu "$GPU_TYPE"
 
 cat <<'EOF'
 
